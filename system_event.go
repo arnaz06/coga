@@ -3,15 +3,9 @@ package coga
 import (
 	"context"
 	"encoding/json"
-	"reflect"
 	"time"
-)
 
-type contextKey int
-
-const (
-	// ContextKeyPublisher is the context key for publisher.
-	ContextKeyPublisher contextKey = iota
+	log "github.com/sirupsen/logrus"
 )
 
 // Publisher is the interface that wraps the basic Publish method.
@@ -38,18 +32,29 @@ func (e SystemEvent) MarshalJSON() ([]byte, error) {
 
 // NewSystemEvent creates a system event using name inferred from the eventBody type name.
 func NewSystemEvent(eventBody Message) SystemEvent {
-	name := reflect.TypeOf(eventBody).Name()
 	return SystemEvent{
-		Name:        name,
+		Name:        "saga-orch",
 		Body:        eventBody,
 		PublishTime: time.Now(),
 	}
 }
 
+func ToSystemEvent(message map[string]interface{}) SystemEvent {
+	var res SystemEvent
+	res.Name, _ = message["name"].(string)
+	body, _ := message["body"].(map[string]interface{})
+	res.Body.ID, _ = body["id"].(string)
+	res.Body.Service, _ = body["service"].(string)
+	res.Body.Event, _ = body["event"].(string)
+	res.Body.Data, _ = body["data"].(map[string]interface{})
+	return res
+}
+
 // PublisherFromContext get Publisher from the ctx.
-func PublisherFromContext(ctx context.Context) Publisher {
-	pub, ok := ctx.Value(ContextKeyPublisher).(Publisher)
+func PublisherFromContext(ctx context.Context, topicKey string) Publisher {
+	pub, ok := ctx.Value(topicKey).(Publisher)
 	if !ok {
+		log.Error("publisher not found")
 		return nil
 	}
 
@@ -57,11 +62,12 @@ func PublisherFromContext(ctx context.Context) Publisher {
 }
 
 // PublishSystemEvent publishes a system event.
-func PublishSystemEvent(ctx context.Context, eventBody Message) {
+func PublishSystemEvent(ctx context.Context, topicKey string, eventBody Message) {
 	e := NewSystemEvent(eventBody)
 
-	publisher := PublisherFromContext(ctx)
+	publisher := PublisherFromContext(ctx, topicKey)
 	if publisher == nil {
+		log.Error("publisher not found")
 		return
 	}
 

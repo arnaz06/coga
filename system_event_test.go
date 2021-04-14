@@ -2,7 +2,6 @@ package coga_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -39,7 +38,7 @@ func (b *bus) Subscribe(h eventHandler) {
 }
 
 func ExamplePublishSystemEvent_withoutPublisher() {
-	coga.PublishSystemEvent(context.Background(), coga.Message{
+	coga.PublishSystemEvent(context.Background(), "topic-key", coga.Message{
 		ID:      "123",
 		Service: "order-service",
 		Event:   coga.EventStart,
@@ -52,18 +51,14 @@ func ExamplePublishSystemEvent_withoutPublisher() {
 func ExamplePublishSystemEvent_withEbus() {
 	ebus := new(bus)
 	ebus.Subscribe(eventHandlerFunc(func(e coga.SystemEvent) {
-		itemJSON, err := json.Marshal(e.Body)
-		if err != nil {
-			panic(err)
-		}
 
 		fmt.Printf("name: '%s'\n", e.Name)
-		fmt.Printf("item: %s\n", itemJSON)
+		fmt.Printf("body: %+v\n", e.Body)
 	}))
 
-	ctx := context.WithValue(context.Background(), coga.ContextKeyPublisher, ebus)
+	ctx := context.WithValue(context.Background(), "topic-key", ebus)
 
-	coga.PublishSystemEvent(ctx, coga.Message{
+	coga.PublishSystemEvent(ctx, "topic-key", coga.Message{
 		ID:      "123",
 		Service: "order-service",
 		Event:   coga.EventStart,
@@ -71,6 +66,6 @@ func ExamplePublishSystemEvent_withEbus() {
 	})
 
 	//Output:
-	// name: 'Message'
-	// item: {"id":"123","service":"order-service","event":"start","data":"eyJtZXNzYWdlIjoibG9yZW0gaXBzdW0ifQ=="}
+	// name: 'saga-orch'
+	// body: {ID:123 Service:order-service Event:start Data:[123 34 109 101 115 115 97 103 101 34 58 34 108 111 114 101 109 32 105 112 115 117 109 34 125]}
 }

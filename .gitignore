@@ -1,0 +1,6 @@
+# credential
+.env
+google_service_account.json
+
+# binary
+cmd/coga/coga

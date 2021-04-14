@@ -1,0 +1,5 @@
+{
+    "order-service": "staging-saga-service-order",
+    "inventory-service": "staging-saga-service-inventory",
+    "shipment-service": "staging-saga-service-shipment"
+}
