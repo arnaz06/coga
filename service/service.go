@@ -23,7 +23,7 @@ func NewMessaheHandler(Ctx context.Context, transactionList map[string]string) M
 func (mh MessageHandler) Handle(m coga.Message) error {
 	switch m.Event {
 	case coga.EventStart:
-		nextServiceName, nextTopicName := resolveNextService(mh.transactionList, m.Service)
+		nextServiceName, nextTopicName := mh.ResolveNextService(mh.transactionList, m.Service)
 		if nextTopicName == "" {
 			return fmt.Errorf("wrong service Name, %s", m.Service)
 		}
@@ -50,7 +50,7 @@ func (mh MessageHandler) Handle(m coga.Message) error {
 	return nil
 }
 
-func resolveNextService(transactionList map[string]string, serviceName string) (nextServiceName string, nextTopicName string) {
+func (mh MessageHandler) ResolveNextService(transactionList map[string]string, serviceName string) (nextServiceName string, nextTopicName string) {
 	sliceTl := make([]string, 0)
 
 	for i, _ := range transactionList {
@@ -60,6 +60,7 @@ func resolveNextService(transactionList map[string]string, serviceName string) (
 	var nextIndex int
 	for i, s := range sliceTl {
 		if i+1 == len(sliceTl) {
+			fmt.Println(s)
 			nextIndex = -1
 			break
 		}
@@ -71,8 +72,8 @@ func resolveNextService(transactionList map[string]string, serviceName string) (
 	}
 	if nextIndex >= 0 {
 		nextTopicName = transactionList[sliceTl[nextIndex]]
+		nextServiceName = sliceTl[nextIndex]
 	}
 
-	return sliceTl[nextIndex], nextTopicName
+	return nextServiceName, nextTopicName
 }
-
