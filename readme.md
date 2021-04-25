@@ -1,1 +1,4 @@
-this project is under construction
+# Coga (CO-saga)
+
+
+## Is service to manage data consistency across microservices in distributed transaction scenarios

@@ -14,7 +14,7 @@ type Publisher interface {
 	Publish(ctx context.Context, e SystemEvent)
 }
 
-// SystemEvent holds information of system event.
+// SystemEvent represent of system event data.
 type SystemEvent struct {
 	Name        string
 	Body        Message
@@ -30,7 +30,7 @@ func (e SystemEvent) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// NewSystemEvent creates a system event using name inferred from the eventBody type name.
+// NewSystemEvent ...
 func NewSystemEvent(eventBody Message) SystemEvent {
 	return SystemEvent{
 		Name:        "saga-orch",
@@ -50,7 +50,7 @@ func ToSystemEvent(message map[string]interface{}) SystemEvent {
 	return res
 }
 
-// PublisherFromContext get Publisher from the ctx.
+// PublisherFromContext is function to get Publisher from context.
 func PublisherFromContext(ctx context.Context, topicKey string) Publisher {
 	pub, ok := ctx.Value(topicKey).(Publisher)
 	if !ok {

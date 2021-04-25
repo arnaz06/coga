@@ -10,10 +10,10 @@ import (
 
 type MessageHandler struct {
 	Ctx             context.Context
-	transactionList map[string]string
+	transactionList []coga.TransactionList
 }
 
-func NewMessaheHandler(Ctx context.Context, transactionList map[string]string) MessageHandler {
+func NewMessaheHandler(Ctx context.Context, transactionList []coga.TransactionList) MessageHandler {
 	return MessageHandler{
 		Ctx:             Ctx,
 		transactionList: transactionList,
@@ -28,21 +28,19 @@ func (mh MessageHandler) Handle(m coga.Message) error {
 			return fmt.Errorf("wrong service Name, %s", m.Service)
 		}
 		m.Service = nextServiceName
-		log.Infof("\n publish to %s = %+v \n", nextTopicName, m)
+		log.Infof("\n publish to  ===== %s ===== \n", nextTopicName)
 		coga.PublishSystemEvent(mh.Ctx, nextTopicName, m)
 	case coga.EventRollback:
-		for serviceName, transaction := range mh.transactionList {
-			if m.Service == serviceName {
-				break
-			}
-			coga.PublishSystemEvent(mh.Ctx, transaction, coga.Message{
+		tl := mh.ResolveRollback(mh.transactionList, m.Service)
+		for _, t := range tl {
+			coga.PublishSystemEvent(mh.Ctx, t.Topic, coga.Message{
 				ID:      m.ID,
 				Event:   coga.EventRollback,
 				Data:    m.Data,
-				Service: serviceName,
+				Service: t.ServiceName,
 			})
 
-			log.Infof("rollback to %s", serviceName)
+			log.Infof("rollback to %s", t.ServiceName)
 		}
 	default:
 		return fmt.Errorf("unsupported event type: %s", m.Event)
@@ -50,30 +48,40 @@ func (mh MessageHandler) Handle(m coga.Message) error {
 	return nil
 }
 
-func (mh MessageHandler) ResolveNextService(transactionList map[string]string, serviceName string) (nextServiceName string, nextTopicName string) {
-	sliceTl := make([]string, 0)
-
-	for i, _ := range transactionList {
-		sliceTl = append(sliceTl, i)
-	}
-
-	var nextIndex int
-	for i, s := range sliceTl {
-		if i+1 == len(sliceTl) {
-			fmt.Println(s)
-			nextIndex = -1
+func (mh MessageHandler) ResolveRollback(tl []coga.TransactionList, serviceName string) (res []coga.TransactionList) {
+	res = make([]coga.TransactionList, 0)
+	for _, t := range tl {
+		if t.ServiceName == "coga-service" {
+			continue
+		}
+		if t.ServiceName == serviceName {
 			break
 		}
+		res = append(res, coga.TransactionList{
+			ServiceName: t.ServiceName,
+			Topic:       t.Topic,
+		})
+	}
+	return res
+}
 
-		if s == serviceName {
-			nextIndex = i + 1
+func (mh MessageHandler) ResolveNextService(tl []coga.TransactionList, serviceName string) (nextServiceName string, nextTopicName string) {
+	temp := 0
+	for i, t := range tl {
+		if i+1 == len(tl) {
+			temp = -1
 			break
 		}
-	}
-	if nextIndex >= 0 {
-		nextTopicName = transactionList[sliceTl[nextIndex]]
-		nextServiceName = sliceTl[nextIndex]
+		if t.ServiceName == serviceName {
+			temp += 1
+			break
+		}
+		temp += 1
 	}
 
+	if temp >= 0 {
+		nextServiceName = tl[temp].ServiceName
+		nextTopicName = tl[temp].Topic
+	}
 	return nextServiceName, nextTopicName
 }

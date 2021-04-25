@@ -1,5 +1,18 @@
-{
-    "order-service": "staging-saga-service-order",
-    "inventory-service": "staging-saga-service-inventory",
-    "shipment-service": "staging-saga-service-shipment"
-}
+[
+    {
+        "service_name": "coga-service",
+        "topic": "staging-saga-service"
+    },
+    {
+        "service_name": "order-service",
+        "topic": "staging-saga-service-order"
+    },
+    {
+        "service_name": "inventory-service",
+        "topic": "staging-saga-service-inventory"
+    },
+    {
+        "service_name": "shipment-service",
+        "topic": "staging-saga-service-shipment"
+    }
+]

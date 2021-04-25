@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.81.0 // indirect
 	cloud.google.com/go/pubsub v1.10.1
+	github.com/alexsasharegan/dotenv v0.0.0-20171113213728-090a4d1b5d42 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
