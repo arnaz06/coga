@@ -51,7 +51,10 @@ func (mh MessageHandler) Handle(m coga.Message) error {
 func (mh MessageHandler) ResolveRollback(tl []coga.TransactionList, serviceName string) (res []coga.TransactionList) {
 	res = make([]coga.TransactionList, 0)
 	for _, t := range tl {
-		if t.ServiceName == serviceName || t.ServiceName == "coga-service" {
+		if t.ServiceName == "coga-service" {
+			continue
+		}
+		if t.ServiceName == serviceName {
 			break
 		}
 		res = append(res, coga.TransactionList{
