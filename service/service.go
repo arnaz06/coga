@@ -32,15 +32,15 @@ func (mh MessageHandler) Handle(m coga.Message) error {
 		coga.PublishSystemEvent(mh.Ctx, nextTopicName, m)
 	case coga.EventRollback:
 		tl := mh.ResolveRollback(mh.transactionList, m.Service)
-		for _, t := range tl {
-			coga.PublishSystemEvent(mh.Ctx, t.Topic, coga.Message{
+		for i := len(tl) - 1; i >= 0; i-- {
+			coga.PublishSystemEvent(mh.Ctx, tl[i].Topic, coga.Message{
 				ID:      m.ID,
 				Event:   coga.EventRollback,
 				Data:    m.Data,
-				Service: t.ServiceName,
+				Service: tl[i].ServiceName,
 			})
 
-			log.Infof("rollback to %s", t.ServiceName)
+			log.Infof("rollback to %s", tl[i].ServiceName)
 		}
 	default:
 		return fmt.Errorf("unsupported event type: %s", m.Event)
